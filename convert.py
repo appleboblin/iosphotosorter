@@ -17,8 +17,19 @@ def convert_heic_to_jpg(file_path):
 def convert_mov_to_mp4(file_path):
     # Define the output MP4 path by replacing the extension
     mp4_path = os.path.splitext(file_path)[0] + ".mp4"
+    
+    # Select codec for H.264
+    # codec = 'libx264' # default software encode
+    # codec = 'h264_nvenc' # NVIDIA GPU both Windows and Linux
+    # codec = 'h264_amf' # AMD GPU Windows Only
+    codec = 'h264_vaapi' # AMD GPU Linux Only
+    # codec = 'h264_omx' # raspberry pi
+    # codec = 'h264_qsv' # Intel intergrated grphics
+    # codec = 'h264_v4l3m3m' # Uses V4L2 Linux kernel api for hardware encode
+    # codec = 'h264_videotoolbox' # macOS
+
     # Use subprocess to run ffmpeg command to convert MOV to MP4
-    subprocess.run(['ffmpeg', '-i', file_path, '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-c:a', 'aac', '-b:a', '160k', '-movflags', 'faststart', mp4_path], capture_output=True)
+    subprocess.run(['ffmpeg', '-i', file_path, '-c:v', codec, '-preset', 'slow', '-crf', '18', '-c:a', 'aac', '-b:a', '160k', '-movflags', 'faststart', mp4_path], capture_output=True)
     return mp4_path
 
 # Function to remove original file after conversion
