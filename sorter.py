@@ -22,10 +22,17 @@ def sort_files_by_date(folder_path):
 
             except Exception as e:
                 print(f"Error processing {file_path}: {e}")
+                
+    # Cleanup: Delete empty folders
+    for root, dirs, _ in os.walk(folder_path, topdown=False):
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            if not os.listdir(dir_path):  # Check if the directory is empty
+                os.rmdir(dir_path)  # Delete the empty directory
 
 def main():
     # Specify the folder containing the images
-    folder_path = "/home/appleboblin/Downloads/covhe/"
+    folder_path = "/home/appleboblin/Downloads/sync/imacphoto/"
 
     # Sort and convert files
     sort_files_by_date(folder_path)

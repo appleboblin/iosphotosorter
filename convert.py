@@ -1,73 +1,42 @@
 import os
-import pyvips
+import shutil
 import subprocess
-from tqdm import tqdm  # Import tqdm for progress bars
+import pyvips
 
-# Function to convert HEIC to JPG
-def convert_heic_to_jpg(file_path):
-    # Open the HEIC image using pyvips
-    im = pyvips.Image.new_from_file(file_path, access="sequential")
-    # Define the output JPG path by replacing the extension
-    jpg_path = os.path.splitext(file_path)[0] + ".jpg"
-    # Write the image to the JPG file
-    im.write_to_file(jpg_path, Q=90)
-    return jpg_path
+def convert_heic_to_jpg(heic_file, jpg_file):
+    """
+    Convert HEIC file to JPG using pyvips library.
+    """
+    image = pyvips.Image.new_from_file(heic_file, access="sequential")
+    image.write_to_file(jpg_file)
 
-# Function to convert MOV to MP4
-def convert_mov_to_mp4(file_path):
-    # Define the output MP4 path by replacing the extension
-    mp4_path = os.path.splitext(file_path)[0] + ".mp4"
-    
-    # Select codec for H.264
-    # codec = 'libx264' # default software encode
-    # codec = 'h264_nvenc' # NVIDIA GPU both Windows and Linux
-    # codec = 'h264_amf' # AMD GPU Windows Only
-    codec = 'h264_vaapi' # AMD GPU Linux Only
-    # codec = 'h264_omx' # raspberry pi
-    # codec = 'h264_qsv' # Intel intergrated grphics
-    # codec = 'h264_v4l3m3m' # Uses V4L2 Linux kernel api for hardware encode
-    # codec = 'h264_videotoolbox' # macOS
+def convert_mov_to_mp4(mov_file, mp4_file):
+    """
+    Convert MOV file to MP4 using ffmpeg.
+    """
+    # Assume its all already encoded in H.264 and AAC
+    command = ["ffmpeg", "-y", "-i", mov_file, "-codec", "copy", mp4_file]
+    subprocess.run(command, check=True)
 
-    # Use subprocess to run ffmpeg command to convert MOV to MP4
-    subprocess.run(['ffmpeg', '-i', file_path, '-c:v', codec, '-preset', 'slow', '-crf', '18', '-c:a', 'aac', '-b:a', '160k', '-movflags', 'faststart', mp4_path], capture_output=True)
-    return mp4_path
+def convert_files_in_folder(folder_path):
+    """
+    Convert HEIC files to JPG and MOV files to MP4 in a folder.
+    """
+    for root, _, files in os.walk(folder_path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            file_name_no_ext, file_ext = os.path.splitext(file_name)
+            if file_ext.lower() == '.heic':
+                jpg_file = os.path.join(root, file_name_no_ext + '.jpg')
+                convert_heic_to_jpg(file_path, jpg_file)
+                print(f"Converted {file_name} to {file_name_no_ext + '.jpg'}")
+                os.remove(file_path)  # Remove the original HEIC file
+            elif file_ext.lower() == '.mov':
+                mp4_file = os.path.join(root, file_name_no_ext + '.mp4')
+                convert_mov_to_mp4(file_path, mp4_file)
+                print(f"Converted {file_name} to {file_name_no_ext + '.mp4'}")
+                os.remove(file_path)  # Remove the original MOV file
 
-# Function to remove original file after conversion
-def remove_original(file_path):
-    os.remove(file_path)
-
-# Main function to convert media files
-def convert_media_files(folder_path):
-    # Walk through the directory tree
-    for root, dirs, files in os.walk(folder_path):
-        # For each file in the current directory
-        for file in tqdm(files, desc="Converting files"):  # tqdm for progress bar
-            file_path = os.path.join(root, file)
-            file_ext = os.path.splitext(file)[1].lower()
-            # Check file extension
-            if file_ext == ".heic":
-                tqdm.write("Converting HEIC to JPG: " + file_path)
-                # Convert HEIC to JPG
-                converted_path = convert_heic_to_jpg(file_path)
-                tqdm.write("Converted to: " + converted_path)
-                # Remove original HEIC file
-                remove_original(file_path)
-                tqdm.write("Removed original: " + file_path)
-            elif file_ext == ".mov":
-                tqdm.write("Converting MOV to MP4: " + file_path)
-                # Convert MOV to MP4
-                converted_path = convert_mov_to_mp4(file_path)
-                tqdm.write("Converted to: " + converted_path)
-                # Remove original MOV file
-                remove_original(file_path)
-                tqdm.write("Removed original: " + file_path)
-
-def main():
-    # Specify the folder containing the files
-    folder_path = "/home/appleboblin/Downloads/covhe/"
-
-    # convert the files
-    convert_media_files(folder_path)
-
-if __name__ == '__main__':
-    main()
+# Example usage:
+folder_path = "/home/appleboblin/Downloads/imacphoto/"
+convert_files_in_folder(folder_path)
