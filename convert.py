@@ -14,7 +14,7 @@ def convert_mov_to_mp4(mov_file, mp4_file):
     """
     Convert MOV file to MP4 using ffmpeg.
     """
-    # Assume its all already encoded in H.264 and AAC
+    # No transcode, some videos are in H.264, some in H.265. Audo are in AAC and pcm_s16le. Theres no need to change. 
     command = ["ffmpeg", "-y", "-i", mov_file, "-codec", "copy", mp4_file]
     subprocess.run(command, check=True)
 
